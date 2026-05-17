@@ -9,12 +9,15 @@ class Config:
 
     @staticmethod
     def get_database_url():
-        host = os.getenv("DB_HOST", "localhost")
-        port = os.getenv("DB_PORT", "5432")
-        name = os.getenv("DB_NAME", "vlab_db")
-        user = os.getenv("DB_USER", "postgres")
-        password = os.getenv("DB_PASSWORD", "postgres")
-        return f"postgresql://{user}:{password}@{host}:{port}/{name}"
+        host = "localhost"
+        port = "5432"
+        name = "vlab_db"
+        user = "postgres"
+        password = "13052001"
+        return (
+        f"postgresql+psycopg2://{user}:{password}"
+        f"@{host}:{port}/{name}?client_encoding=utf8"
+    )
 
     SQLALCHEMY_DATABASE_URI = get_database_url.__func__()
 
