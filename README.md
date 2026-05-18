@@ -1,35 +1,54 @@
-# Vlab — Plano de Aulas
+# Vlab — Sistema de Gerenciamento de Planos de Aula
 
-API RESTful para gerenciamento de planos de aula com sugestões automáticas via Inteligência Artificial.
-
-Projeto desenvolvido como parte do desafio técnico VLAB.
+Plataforma centralizada para planejamento de aulas e organização de conteúdos pedagógicos. O sistema permite o cadastro, organização e consulta de planos de aula, além de utilizar Inteligência Artificial para sugerir conteúdos complementares, tópicos relacionados e tags com base no tema da aula.
 
 ---
 
 ## Stack
 
-- **Python 3.11**
-- **Flask** — framework web
-- **Flask-SQLAlchemy** — ORM para PostgreSQL
-- **PostgreSQL** — banco de dados relacional
-- **Marshmallow** — validação de dados
-- **OpenAI API** — sugestões pedagógicas com IA
-- **Docker** — containerização
+**Backend**
+- Python 3.11
+- Flask + Flask-SQLAlchemy + Flask-CORS
+- PostgreSQL
+- Marshmallow (validação)
+- OpenAI API (Smart Assist)
+
+**Frontend**
+- React 18
+- React Router DOM
+- Vite
+- CSS Modules
+
+**DevOps**
+- Docker + Docker Compose
+- GitHub Actions (CI com flake8 e ESLint)
 
 ---
 
 ## Arquitetura
 
-O projeto segue uma arquitetura em camadas, com responsabilidades bem definidas:
+### Backend
+
+O backend segue uma arquitetura em camadas com responsabilidades bem definidas:
 
 ```
-routes       → apenas mapeamento de URLs
-controllers  → request/response e status HTTP
+routes       → mapeamento de URLs e métodos HTTP
+controllers  → leitura de request, status codes e response
 services     → regras de negócio e logs
 repositories → acesso ao banco de dados
-models       → definição das tabelas
-schemas      → validação de entrada
-utils        → logger e error handlers
+models       → definição das tabelas (SQLAlchemy)
+schemas      → validação de entrada (Marshmallow)
+utils        → logger centralizado e error handlers globais
+```
+
+### Frontend
+
+```
+pages        → telas da aplicação (ListPage, FormPage)
+components   → componentes reutilizáveis (Layout, Filters, PlanCard, etc.)
+services     → chamadas à API do backend
+hooks        → lógica de estado e fetching (usePlans)
+styles       → design system global (variáveis CSS)
 ```
 
 ---
@@ -37,34 +56,64 @@ utils        → logger e error handlers
 ## Estrutura de pastas
 
 ```
-Backend/
-├── app/
-│   ├── controllers/
-│   │   └── lesson_plan_controller.py
-│   ├── services/
-│   │   ├── lesson_plan_service.py
-│   │   └── ai_service.py
-│   ├── repositories/
-│   │   └── lesson_plan_repository.py
-│   ├── routes/
-│   │   ├── lesson_plan_routes.py
-│   │   └── health_routes.py
-│   ├── models/
-│   │   └── lesson_plan.py
-│   ├── schemas/
-│   │   └── lesson_plan_schema.py
-│   ├── config/
-│   │   └── settings.py
-│   ├── utils/
-│   │   ├── logger.py
-│   │   └── error_handlers.py
-│   ├── app.py
-│   └── extensions.py
-├── Dockerfile
-├── docker-compose.yml
-├── .env.example
-├── requirements.txt
-└── run.py
+Projeto-Vlab-plano-de-aulas/
+│
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+│
+├── Backend/
+│   ├── app/
+│   │   ├── controllers/
+│   │   │   └── lesson_plan_controller.py
+│   │   ├── services/
+│   │   │   ├── lesson_plan_service.py
+│   │   │   └── ai_service.py
+│   │   ├── repositories/
+│   │   │   └── lesson_plan_repository.py
+│   │   ├── routes/
+│   │   │   ├── lesson_plan_routes.py
+│   │   │   └── health_routes.py
+│   │   ├── models/
+│   │   │   └── lesson_plan.py
+│   │   ├── schemas/
+│   │   │   └── lesson_plan_schema.py
+│   │   ├── config/
+│   │   │   └── settings.py
+│   │   ├── utils/
+│   │   │   ├── logger.py
+│   │   │   └── error_handlers.py
+│   │   ├── app.py
+│   │   └── extensions.py
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   ├── .env.example
+│   ├── requirements.txt
+│   └── run.py
+│
+└── Frontend/
+    ├── src/
+    │   ├── components/
+    │   │   ├── Layout.jsx
+    │   │   ├── Filters.jsx
+    │   │   ├── PlanCard.jsx
+    │   │   ├── Pagination.jsx
+    │   │   └── Toast.jsx
+    │   ├── pages/
+    │   │   ├── ListPage.jsx
+    │   │   └── FormPage.jsx
+    │   ├── services/
+    │   │   └── api.js
+    │   ├── hooks/
+    │   │   └── usePlans.js
+    │   ├── styles/
+    │   │   └── global.css
+    │   ├── App.jsx
+    │   └── main.jsx
+    ├── eslint.config.js
+    ├── index.html
+    ├── package.json
+    └── vite.config.js
 ```
 
 ---
@@ -74,40 +123,37 @@ Backend/
 ### Pré-requisitos
 
 - Python 3.11+
+- Node.js 20+
 - PostgreSQL rodando localmente
-- (Opcional) Chave da OpenAI para o endpoint de IA
+- Chave da OpenAI (opcional — o sistema funciona sem ela, o Smart Assist retorna um fallback)
 
-### 1. Clone e entre na pasta
+### 1. Clone o repositório
 
 ```bash
 git clone <url-do-repositorio>
-cd Projeto-Vlab-plano-de-aulas/Backend
+cd Projeto-Vlab-plano-de-aulas
 ```
 
-### 2. Ative o ambiente virtual
+### 2. Configure o Backend
 
 ```bash
+cd Backend
+
+# Ative o ambiente virtual
 # Windows
 venv\Scripts\activate
-
 # Mac/Linux
 source venv/bin/activate
-```
 
-### 3. Instale as dependências
-
-```bash
+# Instale as dependências
 pip install -r requirements.txt
-```
 
-### 4. Configure o .env
-
-```bash
+# Configure as variáveis de ambiente
 cp .env.example .env
+# Edite o .env com suas credenciais
 ```
 
-Edite o `.env` com suas credenciais:
-
+Conteúdo do `.env`:
 ```
 FLASK_ENV=development
 DB_HOST=localhost
@@ -118,19 +164,31 @@ DB_PASSWORD=sua_senha
 OPENAI_API_KEY=sk-sua-chave
 ```
 
-### 5. Crie o banco
+### 3. Crie o banco de dados
 
 ```bash
 psql -U postgres -c "CREATE DATABASE vlab_db;"
 ```
 
-### 6. Suba o servidor
+### 4. Suba o Backend
 
 ```bash
 python run.py
 ```
 
-O servidor estará disponível em `http://localhost:5000`.
+Servidor disponível em `http://localhost:5000`.
+
+### 5. Configure e suba o Frontend
+
+Em outro terminal:
+
+```bash
+cd Frontend
+npm install
+npm run dev
+```
+
+Aplicação disponível em `http://localhost:3000`.
 
 ---
 
@@ -143,41 +201,42 @@ O servidor estará disponível em `http://localhost:5000`.
 ### 1. Configure o .env
 
 ```bash
+cd Backend
 cp .env.example .env
-# edite com suas credenciais
+# Edite com suas credenciais
 ```
 
 ### 2. Suba os containers
 
 ```bash
+cd Backend
 docker compose up --build
 ```
 
-O comando sobe o banco PostgreSQL e o backend automaticamente. Aguarde o log `Running on http://0.0.0.0:5000` antes de fazer requisições.
+O comando sobe o PostgreSQL e o backend automaticamente. Aguarde a mensagem:
+```
+backend-1 | * Running on http://0.0.0.0:5000
+```
 
 Para rodar em background:
-
 ```bash
 docker compose up --build -d
 ```
 
 Para parar:
-
 ```bash
 docker compose down
 ```
 
 ---
 
-## Endpoints
+## Endpoints da API
 
 ### Health Check
 
 ```
 GET /health
 ```
-
-**Resposta:**
 ```json
 { "status": "ok" }
 ```
@@ -190,7 +249,6 @@ GET /health
 POST /lesson-plans
 ```
 
-**Body:**
 ```json
 {
   "title": "Introdução ao OSPF",
@@ -204,21 +262,7 @@ POST /lesson-plans
 }
 ```
 
-**Resposta:** `201 Created`
-```json
-{
-  "id": 1,
-  "title": "Introdução ao OSPF",
-  "discipline": "Redes de Computadores",
-  "objective": "Compreender o funcionamento do protocolo OSPF",
-  "summary": "Aula sobre roteamento dinâmico com foco em OSPF",
-  "planned_date": "2025-09-15",
-  "contents": "Conceitos de área, DR/BDR, métricas de custo",
-  "support_resources": "Slides PDF, Cisco Packet Tracer",
-  "tags": "redes,ospf,routing",
-  "created_at": "2025-05-17T10:00:00"
-}
-```
+Resposta: `201 Created`
 
 ---
 
@@ -228,9 +272,7 @@ POST /lesson-plans
 GET /lesson-plans
 ```
 
-**Query params disponíveis:**
-
-| Param | Descrição | Exemplo |
+| Parâmetro | Descrição | Exemplo |
 |---|---|---|
 | `page` | Página atual | `?page=1` |
 | `limit` | Itens por página | `?limit=10` |
@@ -240,7 +282,7 @@ GET /lesson-plans
 | `planned_date` | Filtro por data | `?planned_date=2025-09-15` |
 | `sort` | Ordenação | `?sort=title` |
 
-**Resposta:** `200 OK`
+Resposta:
 ```json
 {
   "data": [...],
@@ -259,8 +301,6 @@ GET /lesson-plans
 GET /lesson-plans/1
 ```
 
-**Resposta:** `200 OK` ou `404 Not Found`
-
 ---
 
 ### Atualizar plano
@@ -269,13 +309,7 @@ GET /lesson-plans/1
 PUT /lesson-plans/1
 ```
 
-**Body (todos os campos são opcionais):**
-```json
-{
-  "tags": "redes,ospf,avancado",
-  "contents": "Conteúdo atualizado com mais detalhes"
-}
-```
+Todos os campos são opcionais na atualização.
 
 ---
 
@@ -285,7 +319,6 @@ PUT /lesson-plans/1
 DELETE /lesson-plans/1
 ```
 
-**Resposta:**
 ```json
 { "message": "Lesson plan deleted successfully." }
 ```
@@ -298,7 +331,6 @@ DELETE /lesson-plans/1
 POST /lesson-plans/ai-suggestions
 ```
 
-**Body:**
 ```json
 {
   "title": "Introdução ao OSPF",
@@ -307,20 +339,18 @@ POST /lesson-plans/ai-suggestions
 }
 ```
 
-**Resposta:** `200 OK`
+Resposta `200 OK`:
 ```json
 {
   "contents": [
     "Roteamento dinâmico vs estático",
     "Eleição de DR e BDR",
-    "LSA e propagação de rotas",
-    "Convergência OSPF"
+    "LSA e propagação de rotas"
   ],
   "recommended_tags": [
     "ospf",
     "routing",
-    "redes",
-    "ccna"
+    "redes"
   ],
   "support_resources": [
     "Cisco OSPF Configuration Guide",
@@ -330,7 +360,7 @@ POST /lesson-plans/ai-suggestions
 }
 ```
 
-**Resposta em caso de falha:** `503 Service Unavailable`
+Resposta em caso de falha `503`:
 ```json
 {
   "error": "Unable to generate AI suggestions right now. Please try again later."
@@ -344,7 +374,21 @@ POST /lesson-plans/ai-suggestions
 O sistema registra as principais operações no terminal:
 
 ```
-2025-05-17T10:00:00 [INFO] app.services.lesson_plan_service — Lesson plan created successfully: id=1 title='Introdução ao OSPF'
-2025-05-17T10:01:00 [INFO] app.services.ai_service — AI suggestion generated: Title='Introdução ao OSPF', Discipline='Redes', TokenUsage=320, Latency=1.8s
-2025-05-17T10:02:00 [ERROR] app.services.ai_service — OpenAI request failed: Connection timeout
+2025-05-17T10:00:00 [INFO]  app.services.lesson_plan_service — Lesson plan created successfully: id=1 title='Introdução ao OSPF'
+2025-05-17T10:01:00 [INFO]  app.services.lesson_plan_service — Lesson plan updated successfully: id=1
+2025-05-17T10:02:00 [INFO]  app.services.lesson_plan_service — Lesson plan deleted successfully: id=1
+2025-05-17T10:03:00 [INFO]  app.services.ai_service — AI suggestion generated: Title='Introdução ao OSPF', Discipline='Redes', TokenUsage=320, Latency=1.8s
+2025-05-17T10:04:00 [ERROR] app.services.ai_service — OpenAI request failed: Connection timeout
 ```
+
+---
+
+## CI — Integração Contínua
+
+O projeto possui um pipeline no GitHub Actions que roda automaticamente a cada push ou pull request na branch `main`.
+
+**Jobs:**
+- `lint-backend` — roda o `flake8` no código Python do Backend
+- `lint-frontend` — roda o `eslint` no código React do Frontend
+
+O status aparece diretamente na aba **Actions** do repositório.
