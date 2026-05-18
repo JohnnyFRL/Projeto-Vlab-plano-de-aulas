@@ -3,42 +3,14 @@ from sqlalchemy import asc, desc, or_
 from app.extensions import db
 from app.models.lesson_plan import LessonPlan
 
-
-# ─── leitura simples ────────────────────────────────────────────────────────
-
-def get_by_id(plan_id: int):
-    return db.session.get(LessonPlan, plan_id)
-
-
-# ─── listagem com filtros e paginação ────────────────────────────────────────
-
-_SORT_MAP = {
+_SORT_FIELDS = {
     "title": LessonPlan.title,
     "created_at": LessonPlan.created_at,
     "planned_date": LessonPlan.planned_date,
 }
 
 
-def get_all(
-    page: int = 1,
-    per_page: int = 10,
-    search: str = "",
-    discipline: str = "",
-    tags: str = "",
-    date_from=None,
-    date_to=None,
-    sort_by: str = "created_at",
-    order: str = "desc",
-):
-    """
-    Retorna uma página de planos com suporte a:
-      - search        → busca por título (ILIKE)
-      - discipline    → filtro por disciplina (ILIKE)
-      - tags          → string CSV; qualquer tag presente (OR)
-      - date_from/to  → intervalo de planned_date
-      - sort_by       → title | created_at | planned_date
-      - order         → asc | desc
-    """
+def get_all(page, limit, search, discipline, tag, planned_date, sort):
     query = LessonPlan.query
 
     if search:
@@ -47,26 +19,23 @@ def get_all(
     if discipline:
         query = query.filter(LessonPlan.discipline.ilike(f"%{discipline}%"))
 
-    if tags:
-        tag_list = [t.strip() for t in tags.split(",") if t.strip()]
-        if tag_list:
-            query = query.filter(or_(*[LessonPlan.tags.ilike(f"%{t}%") for t in tag_list]))
+    if tag:
+        query = query.filter(LessonPlan.tags.ilike(f"%{tag}%"))
 
-    if date_from:
-        query = query.filter(LessonPlan.planned_date >= date_from)
-    if date_to:
-        query = query.filter(LessonPlan.planned_date <= date_to)
+    if planned_date:
+        query = query.filter(LessonPlan.planned_date == planned_date)
 
-    sort_col = _SORT_MAP.get(sort_by, LessonPlan.created_at)
-    sort_fn = desc if order.lower() == "desc" else asc
-    query = query.order_by(sort_fn(sort_col))
+    sort_col = _SORT_FIELDS.get(sort, LessonPlan.created_at)
+    query = query.order_by(desc(sort_col))
 
-    return query.paginate(page=page, per_page=per_page, error_out=False)
+    return query.paginate(page=page, per_page=limit, error_out=False)
 
 
-# ─── escrita ─────────────────────────────────────────────────────────────────
+def get_by_id(plan_id):
+    return db.session.get(LessonPlan, plan_id)
 
-def create(data: dict) -> LessonPlan:
+
+def create(data):
     plan = LessonPlan(
         title=data["title"],
         objective=data["objective"],
@@ -82,17 +51,15 @@ def create(data: dict) -> LessonPlan:
     return plan
 
 
-def update(plan: LessonPlan, data: dict) -> LessonPlan:
-    for field in (
-        "title", "objective", "summary", "planned_date",
-        "discipline", "contents", "support_resources", "tags",
-    ):
+def update(plan, data):
+    for field in ("title", "objective", "summary", "planned_date",
+                  "discipline", "contents", "support_resources", "tags"):
         if field in data:
             setattr(plan, field, data[field])
     db.session.commit()
     return plan
 
 
-def delete(plan: LessonPlan) -> None:
+def delete(plan):
     db.session.delete(plan)
     db.session.commit()
