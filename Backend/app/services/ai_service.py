@@ -1,19 +1,15 @@
 import os
 import json
-import logging
 import time
 
 from openai import OpenAI, OpenAIError
 
-logger = logging.getLogger(__name__)
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 FALLBACK = {
-    "contents": [
-        "Não foi possível gerar sugestões no momento.",
-        "Tente novamente em alguns instantes.",
-    ],
-    "recommended_tags": [],
-    "support_resources": [],
+    "error": "Unable to generate AI suggestions right now. Please try again later."
 }
 
 
@@ -24,7 +20,11 @@ def _get_client():
     return OpenAI(api_key=api_key, timeout=20.0)
 
 
-def get_suggestions(title: str, discipline: str, summary: str) -> dict:
+def get_suggestions(title: str, discipline: str, summary: str) -> tuple[dict, bool]:
+    """
+    Retorna (resultado, sucesso).
+    sucesso=False indica que deve ser retornado status 503 ao cliente.
+    """
     prompt = f"""Você é um assistente pedagógico especialista em planejamento de aulas.
 
 Com base nas informações abaixo, sugira conteúdos complementares para enriquecer o plano de aula.
@@ -56,7 +56,7 @@ Responda APENAS com um JSON válido, sem texto adicional, no seguinte formato:
         usage = response.usage.total_tokens if response.usage else "?"
 
         logger.info(
-            "AI Request: Title=%r, Discipline=%r, TokenUsage=%s, Latency=%ss",
+            "AI suggestion generated: Title=%r, Discipline=%r, TokenUsage=%s, Latency=%ss",
             title, discipline, usage, latency,
         )
 
@@ -67,16 +67,16 @@ Responda APENAS com um JSON válido, sem texto adicional, no seguinte formato:
             "contents": result.get("contents", []),
             "recommended_tags": result.get("recommended_tags", []),
             "support_resources": result.get("support_resources", []),
-        }
+        }, True
 
     except json.JSONDecodeError:
-        logger.warning("AI retornou resposta fora do formato JSON esperado.")
-        return FALLBACK
+        logger.warning("AI returned response in unexpected format (not valid JSON)")
+        return FALLBACK, False
 
     except OpenAIError as e:
-        logger.error("Erro na API da OpenAI: %s", str(e))
-        return FALLBACK
+        logger.error("OpenAI request failed: %s", str(e))
+        return FALLBACK, False
 
     except Exception as e:
-        logger.error("Erro inesperado no serviço de IA: %s", str(e))
-        return FALLBACK
+        logger.error("Unexpected error in AI service: %s", str(e))
+        return FALLBACK, False

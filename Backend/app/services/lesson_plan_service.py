@@ -1,6 +1,9 @@
 from datetime import date
 
 from app.repositories import lesson_plan_repository as repo
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def list_plans(page, limit, search, discipline, tag, planned_date, sort):
@@ -35,6 +38,7 @@ def get_plan(plan_id):
 
 def create_plan(data):
     plan = repo.create(data)
+    logger.info("Lesson plan created successfully: id=%s title=%r", plan.id, plan.title)
     return plan.to_dict()
 
 
@@ -42,7 +46,9 @@ def update_plan(plan_id, data):
     plan = repo.get_by_id(plan_id)
     if plan is None:
         return None
-    return repo.update(plan, data).to_dict()
+    updated = repo.update(plan, data)
+    logger.info("Lesson plan updated successfully: id=%s", plan_id)
+    return updated.to_dict()
 
 
 def delete_plan(plan_id):
@@ -50,4 +56,5 @@ def delete_plan(plan_id):
     if plan is None:
         return False
     repo.delete(plan)
+    logger.info("Lesson plan deleted successfully: id=%s", plan_id)
     return True
