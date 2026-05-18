@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate, ValidationError
+from marshmallow import Schema, fields, validate
 
 
 class LessonPlanSchema(Schema):
@@ -21,3 +21,9 @@ class LessonPlanUpdateSchema(Schema):
     contents = fields.String(load_default=None)
     support_resources = fields.String(load_default=None)
     tags = fields.String(load_default=None)
+
+
+class AISuggestionsSchema(Schema):
+    title = fields.String(required=True, validate=validate.Length(min=1))
+    discipline = fields.String(required=True, validate=validate.Length(min=1))
+    summary = fields.String(required=True, validate=validate.Length(min=1))

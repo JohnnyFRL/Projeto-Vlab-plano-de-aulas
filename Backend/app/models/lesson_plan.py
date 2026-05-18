@@ -14,7 +14,11 @@ class LessonPlan(db.Model):
     contents = db.Column(db.Text, nullable=True)
     support_resources = db.Column(db.Text, nullable=True)
     tags = db.Column(db.String(300), nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
 
     def to_dict(self):
         return {
