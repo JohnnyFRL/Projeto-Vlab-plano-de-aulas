@@ -1,4 +1,4 @@
-from sqlalchemy import asc, desc, or_
+from sqlalchemy import asc, desc
 
 from app.extensions import db
 from app.models.lesson_plan import LessonPlan

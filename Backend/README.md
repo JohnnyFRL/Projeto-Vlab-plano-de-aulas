@@ -1,20 +1,90 @@
-# Projeto VLAB — Backend
+# Vlab — Plano de Aulas
 
-API RESTful para gerenciamento de planos de aula com sugestões via IA.
+API RESTful para gerenciamento de planos de aula com sugestões automáticas via Inteligência Artificial.
+
+Projeto desenvolvido como parte do desafio técnico VLAB.
 
 ---
 
-## Requisitos
+## Stack
+
+- **Python 3.11**
+- **Flask** — framework web
+- **Flask-SQLAlchemy** — ORM para PostgreSQL
+- **PostgreSQL** — banco de dados relacional
+- **Marshmallow** — validação de dados
+- **OpenAI API** — sugestões pedagógicas com IA
+- **Docker** — containerização
+
+---
+
+## Arquitetura
+
+O projeto segue uma arquitetura em camadas, com responsabilidades bem definidas:
+
+```
+routes       → apenas mapeamento de URLs
+controllers  → request/response e status HTTP
+services     → regras de negócio e logs
+repositories → acesso ao banco de dados
+models       → definição das tabelas
+schemas      → validação de entrada
+utils        → logger e error handlers
+```
+
+---
+
+## Estrutura de pastas
+
+```
+Backend/
+├── app/
+│   ├── controllers/
+│   │   └── lesson_plan_controller.py
+│   ├── services/
+│   │   ├── lesson_plan_service.py
+│   │   └── ai_service.py
+│   ├── repositories/
+│   │   └── lesson_plan_repository.py
+│   ├── routes/
+│   │   ├── lesson_plan_routes.py
+│   │   └── health_routes.py
+│   ├── models/
+│   │   └── lesson_plan.py
+│   ├── schemas/
+│   │   └── lesson_plan_schema.py
+│   ├── config/
+│   │   └── settings.py
+│   ├── utils/
+│   │   ├── logger.py
+│   │   └── error_handlers.py
+│   ├── app.py
+│   └── extensions.py
+├── Dockerfile
+├── docker-compose.yml
+├── .env.example
+├── requirements.txt
+└── run.py
+```
+
+---
+
+## Como rodar localmente
+
+### Pré-requisitos
 
 - Python 3.11+
 - PostgreSQL rodando localmente
-- Chave da OpenAI (para o endpoint de IA)
+- (Opcional) Chave da OpenAI para o endpoint de IA
 
----
+### 1. Clone e entre na pasta
 
-## Como rodar
+```bash
+git clone <url-do-repositorio>
+cd Projeto-Vlab-plano-de-aulas/Backend
+```
 
-### 1. Ative o ambiente virtual
+### 2. Ative o ambiente virtual
 
 ```bash
 # Windows
@@ -24,15 +94,19 @@ venv\Scripts\activate
 source venv/bin/activate
 ```
 
-### 2. Instale as dependências
+### 3. Instale as dependências
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Configure o .env
+### 4. Configure o .env
 
-Copie o `.env.example` para `.env` e preencha:
+```bash
+cp .env.example .env
+```
+
+Edite o `.env` com suas credenciais:
 
 ```
 FLASK_ENV=development
@@ -44,107 +118,188 @@ DB_PASSWORD=sua_senha
 OPENAI_API_KEY=sk-sua-chave
 ```
 
-### 4. Crie o banco de dados (se não existir)
+### 5. Crie o banco
 
 ```bash
 psql -U postgres -c "CREATE DATABASE vlab_db;"
 ```
 
-### 5. Suba o servidor
+### 6. Suba o servidor
 
 ```bash
 python run.py
 ```
 
-O servidor sobe em `http://localhost:5000`.
+O servidor estará disponível em `http://localhost:5000`.
+
+---
+
+## Como rodar com Docker
+
+### Pré-requisitos
+
+- Docker Desktop instalado e rodando
+
+### 1. Configure o .env
+
+```bash
+cp .env.example .env
+# edite com suas credenciais
+```
+
+### 2. Suba os containers
+
+```bash
+docker compose up --build
+```
+
+O comando sobe o banco PostgreSQL e o backend automaticamente. Aguarde o log `Running on http://0.0.0.0:5000` antes de fazer requisições.
+
+Para rodar em background:
+
+```bash
+docker compose up --build -d
+```
+
+Para parar:
+
+```bash
+docker compose down
+```
 
 ---
 
 ## Endpoints
 
-### Health check
+### Health Check
+
 ```
 GET /health
 ```
 
+**Resposta:**
+```json
+{ "status": "ok" }
+```
+
 ---
 
-### Criar plano
+### Criar plano de aula
+
 ```
 POST /lesson-plans
-Content-Type: application/json
+```
 
+**Body:**
+```json
 {
   "title": "Introdução ao OSPF",
   "discipline": "Redes de Computadores",
-  "objective": "Entender o funcionamento do protocolo OSPF",
+  "objective": "Compreender o funcionamento do protocolo OSPF",
   "summary": "Aula sobre roteamento dinâmico com foco em OSPF",
   "planned_date": "2025-09-15",
-  "contents": "Conceitos de área, DR/BDR, métricas",
+  "contents": "Conceitos de área, DR/BDR, métricas de custo",
   "support_resources": "Slides PDF, Cisco Packet Tracer",
   "tags": "redes,ospf,routing"
 }
 ```
 
+**Resposta:** `201 Created`
+```json
+{
+  "id": 1,
+  "title": "Introdução ao OSPF",
+  "discipline": "Redes de Computadores",
+  "objective": "Compreender o funcionamento do protocolo OSPF",
+  "summary": "Aula sobre roteamento dinâmico com foco em OSPF",
+  "planned_date": "2025-09-15",
+  "contents": "Conceitos de área, DR/BDR, métricas de custo",
+  "support_resources": "Slides PDF, Cisco Packet Tracer",
+  "tags": "redes,ospf,routing",
+  "created_at": "2025-05-17T10:00:00"
+}
+```
+
 ---
 
-### Listar planos (com filtros, busca, paginação, ordenação)
+### Listar planos
+
 ```
 GET /lesson-plans
-GET /lesson-plans?page=1&limit=5
-GET /lesson-plans?search=ospf
-GET /lesson-plans?discipline=Redes
-GET /lesson-plans?tag=routing
-GET /lesson-plans?planned_date=2025-09-15
-GET /lesson-plans?sort=title
-GET /lesson-plans?discipline=Redes&tag=ospf&search=OSPF
 ```
 
-Resposta:
+**Query params disponíveis:**
+
+| Param | Descrição | Exemplo |
+|---|---|---|
+| `page` | Página atual | `?page=1` |
+| `limit` | Itens por página | `?limit=10` |
+| `search` | Busca por título | `?search=ospf` |
+| `discipline` | Filtro por disciplina | `?discipline=Redes` |
+| `tag` | Filtro por tag | `?tag=routing` |
+| `planned_date` | Filtro por data | `?planned_date=2025-09-15` |
+| `sort` | Ordenação | `?sort=title` |
+
+**Resposta:** `200 OK`
 ```json
 {
   "data": [...],
-  "total": 12,
+  "total": 20,
   "page": 1,
-  "pages": 3,
-  "per_page": 5
+  "pages": 2,
+  "per_page": 10
 }
 ```
 
 ---
 
 ### Buscar plano por ID
+
 ```
 GET /lesson-plans/1
 ```
 
+**Resposta:** `200 OK` ou `404 Not Found`
+
 ---
 
 ### Atualizar plano
+
 ```
 PUT /lesson-plans/1
-Content-Type: application/json
+```
 
+**Body (todos os campos são opcionais):**
+```json
 {
   "tags": "redes,ospf,avancado",
-  "contents": "Conteúdo atualizado"
+  "contents": "Conteúdo atualizado com mais detalhes"
 }
 ```
 
 ---
 
 ### Deletar plano
+
 ```
 DELETE /lesson-plans/1
 ```
 
+**Resposta:**
+```json
+{ "message": "Lesson plan deleted successfully." }
+```
+
 ---
 
-### Sugestões com IA (Smart Assist)
+### Smart Assist — Sugestões com IA
+
 ```
 POST /lesson-plans/ai-suggestions
-Content-Type: application/json
+```
 
+**Body:**
+```json
 {
   "title": "Introdução ao OSPF",
   "discipline": "Redes",
@@ -152,7 +307,7 @@ Content-Type: application/json
 }
 ```
 
-Resposta:
+**Resposta:** `200 OK`
 ```json
 {
   "contents": [
@@ -175,24 +330,21 @@ Resposta:
 }
 ```
 
+**Resposta em caso de falha:** `503 Service Unavailable`
+```json
+{
+  "error": "Unable to generate AI suggestions right now. Please try again later."
+}
+```
+
 ---
 
-## Estrutura do projeto
+## Logs
+
+O sistema registra as principais operações no terminal:
 
 ```
-backend/
-├── app/
-│   ├── controllers/        # request/response, status codes
-│   ├── services/           # regra de negócio + IA
-│   ├── repositories/       # acesso ao banco
-│   ├── routes/             # apenas rotas
-│   ├── models/             # modelos SQLAlchemy
-│   ├── schemas/            # validação marshmallow
-│   ├── config/             # configurações de ambiente
-│   ├── app.py              # App Factory
-│   └── extensions.py       # db, cors
-├── .env
-├── .env.example
-├── requirements.txt
-└── run.py
+2025-05-17T10:00:00 [INFO] app.services.lesson_plan_service — Lesson plan created successfully: id=1 title='Introdução ao OSPF'
+2025-05-17T10:01:00 [INFO] app.services.ai_service — AI suggestion generated: Title='Introdução ao OSPF', Discipline='Redes', TokenUsage=320, Latency=1.8s
+2025-05-17T10:02:00 [ERROR] app.services.ai_service — OpenAI request failed: Connection timeout
 ```
