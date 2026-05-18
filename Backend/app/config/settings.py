@@ -6,20 +6,12 @@ load_dotenv()
 
 class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-    @staticmethod
-    def get_database_url():
-        host = "localhost"
-        port = "5432"
-        name = "vlab_db"
-        user = "postgres"
-        password = "13052001"
-        return (
-        f"postgresql+psycopg2://{user}:{password}"
-        f"@{host}:{port}/{name}?client_encoding=utf8"
+    SQLALCHEMY_DATABASE_URI = (
+        f"postgresql+psycopg2://"
+        f"{os.getenv('DB_USER', 'postgres')}:{os.getenv('DB_PASSWORD', '')}"
+        f"@{os.getenv('DB_HOST', 'localhost')}:{os.getenv('DB_PORT', '5432')}"
+        f"/{os.getenv('DB_NAME', 'vlab_db')}?client_encoding=utf8"
     )
-
-    SQLALCHEMY_DATABASE_URI = get_database_url.__func__()
 
 
 class DevelopmentConfig(Config):
