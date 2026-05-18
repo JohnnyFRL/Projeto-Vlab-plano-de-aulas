@@ -3,59 +3,49 @@ from datetime import date
 from app.repositories import lesson_plan_repository as repo
 
 
-def list_plans(
-    page: int = 1,
-    per_page: int = 10,
-    search: str = "",
-    discipline: str = "",
-    tags: str = "",
-    date_from=None,
-    date_to=None,
-    sort_by: str = "created_at",
-    order: str = "desc",
-) -> dict:
+def list_plans(page, limit, search, discipline, tag, planned_date, sort):
+    try:
+        parsed_date = date.fromisoformat(planned_date) if planned_date else None
+    except ValueError:
+        parsed_date = None
+
     pagination = repo.get_all(
         page=page,
-        per_page=per_page,
+        limit=limit,
         search=search,
         discipline=discipline,
-        tags=tags,
-        date_from=date_from,
-        date_to=date_to,
-        sort_by=sort_by,
-        order=order,
+        tag=tag,
+        planned_date=parsed_date,
+        sort=sort,
     )
+
     return {
         "data": [p.to_dict() for p in pagination.items],
-        "meta": {
-            "page": pagination.page,
-            "per_page": pagination.per_page,
-            "total": pagination.total,
-            "pages": pagination.pages,
-            "has_next": pagination.has_next,
-            "has_prev": pagination.has_prev,
-        },
+        "total": pagination.total,
+        "page": pagination.page,
+        "pages": pagination.pages,
+        "per_page": pagination.per_page,
     }
 
 
-def get_plan(plan_id: int):
+def get_plan(plan_id):
     plan = repo.get_by_id(plan_id)
     return plan.to_dict() if plan else None
 
 
-def create_plan(data: dict) -> dict:
+def create_plan(data):
     plan = repo.create(data)
     return plan.to_dict()
 
 
-def update_plan(plan_id: int, data: dict):
+def update_plan(plan_id, data):
     plan = repo.get_by_id(plan_id)
     if plan is None:
         return None
     return repo.update(plan, data).to_dict()
 
 
-def delete_plan(plan_id: int) -> bool:
+def delete_plan(plan_id):
     plan = repo.get_by_id(plan_id)
     if plan is None:
         return False
