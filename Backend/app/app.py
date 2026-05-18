@@ -1,21 +1,18 @@
 import os
-import logging
-from flask import Flask, jsonify
+from flask import Flask
 from dotenv import load_dotenv
 
 from app.extensions import db, cors
 from app.config.settings import config_by_env
+from app.utils.logger import setup_logging
+from app.utils.error_handlers import register_error_handlers
 
 load_dotenv()
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
-    datefmt="%Y-%m-%dT%H:%M:%S",
-)
-
 
 def create_app():
+    setup_logging()
+
     app = Flask(__name__)
 
     env = os.getenv("FLASK_ENV", "development")
@@ -30,13 +27,7 @@ def create_app():
     app.register_blueprint(lesson_plan_bp)
     app.register_blueprint(health_bp)
 
-    @app.errorhandler(404)
-    def not_found(e):
-        return jsonify({"error": "Recurso não encontrado."}), 404
-
-    @app.errorhandler(500)
-    def server_error(e):
-        return jsonify({"error": "Erro interno no servidor."}), 500
+    register_error_handlers(app)
 
     with app.app_context():
         from app.models import lesson_plan  # noqa: F401
