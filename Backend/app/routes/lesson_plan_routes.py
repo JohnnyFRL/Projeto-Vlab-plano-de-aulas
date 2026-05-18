@@ -8,3 +8,4 @@ lesson_plan_bp.add_url_rule("", view_func=controller.create_plan, methods=["POST
 lesson_plan_bp.add_url_rule("/<int:plan_id>", view_func=controller.get_plan, methods=["GET"])
 lesson_plan_bp.add_url_rule("/<int:plan_id>", view_func=controller.update_plan, methods=["PUT"])
 lesson_plan_bp.add_url_rule("/<int:plan_id>", view_func=controller.delete_plan, methods=["DELETE"])
+lesson_plan_bp.add_url_rule("/ai-suggestions", view_func=controller.ai_suggestions, methods=["POST"])
